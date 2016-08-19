@@ -6,6 +6,8 @@ var Hotel = require('../../models/hotel');
 var Restaurant = require('../../models/restaurant');
 var Activity = require('../../models/activity');
 
+
+
 // get a list of all the days
 router.get('/', function(req, res, next) {
 	Day.findAll()
@@ -33,6 +35,7 @@ router.delete('/:dayId', function(req, res, next) {
 		where: {number: req.params.dayId}
 	})
 	.catch(next);
+	res.send()
 })
 
 //create a new day.
@@ -44,6 +47,7 @@ router.post('/:dayId', function(req, res, next) {
 		return newDay;
 	})
 	.catch(next);
+	res.send()
 })
 
 //add and remove attraction from day
@@ -63,47 +67,68 @@ router.post('/:dayId/:type/:attractionId', function(req, res, next) {
 			break;
 
 		case 'restaurant':
-			var restaurant;
-			Restaurant.findOne({
-				where: {id: req.params.attractionId}
-			})
-			.then(function(_restaurant) {
-				restaurant = _restaurant;
-			})
-
 			Day.findOne({
 				where: {number: dayNum}
 			})
 			.then(function(day) {
-				return day.setRestaurants([restaurant]);
+				return day.addRestaurant(req.params.attractionId);
 			})
 			.catch(next);
 			break;
 
 		case 'activity':
-			var activity;
-			Activity.findOne({
-				where: {id: req.params.attractionId}
-			})
-			.then(function(_activity) {
-				activity = _activity;
-			})
-
 			Day.findOne({
 				where: {number:dayNum}
 			})
 			.then(function(day) {
-				return day.setActivities([activity]);
+				return day.addActivity(req.params.attractionId);
 			})
 			.catch(next);
 			break;
 
 		default: throw Error;
 	}
+	res.send()
 });
 
 router.delete('/:dayId/:type/:attractionId', function(req, res, next) {
-	
+	var dayNum = +req.params.dayId;
+	switch(req.params.type) {
+		case 'hotel':
+			Day.findOne({
+				where: {number: dayNum}
+			})
+			.then(function(day) {
+				console.log('DAY', day)
+				return day.update({hotelId: null});
+			})
+			.catch(next);
+			break;
+
+		case 'restaurant':
+			Day.findOne({
+				where: {number: dayNum}
+			})
+			.then(function(day) {
+				return day.removeRestaurant(req.params.attractionId);
+			})
+			.catch(next);
+			break;
+
+		case 'activity':
+			Day.findOne({
+				where: {number:dayNum}
+			})
+			.then(function(day) {
+				return day.removeActivity(req.params.attractionId);
+			})
+			.catch(next);
+			break;
+
+		default: throw Error;
+	}
+	res.send()
+
 })
 
 module.exports = router;
